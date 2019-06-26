@@ -5,6 +5,25 @@ const app = express();
 app.use(express.json());
 
 const projects = [];
+let countCallsHttp = 0;
+
+function checkProjectExist(req, res, next) {
+  const { id } = req.params;
+  const existProject = projects.findIndex(project => project.id === id);
+
+  if (existProject < 0)
+    return res.status(400).json({ Error: `Project id: ${id} does not exist.` });
+
+  next();
+}
+
+function sumCallHttp(req, res, next) {
+  countCallsHttp++;
+  console.log(`Número de requisições: ${countCallsHttp}`);
+  next();
+}
+
+app.use(sumCallHttp);
 
 app.get("/projects", (req, res) => {
   res.json(projects);
@@ -23,7 +42,7 @@ app.post("/projects", (req, res) => {
   res.json(projects);
 });
 
-app.put("/projects/:id", (req, res) => {
+app.put("/projects/:id", checkProjectExist, (req, res) => {
   const { title } = req.body;
   const { id } = req.params;
 
@@ -34,7 +53,7 @@ app.put("/projects/:id", (req, res) => {
   res.json(project);
 });
 
-app.delete("/projects/:id", (req, res) => {
+app.delete("/projects/:id", checkProjectExist, (req, res) => {
   const { id } = req.params;
 
   const projectIndex = projects.findIndex(project => project.id === id);
@@ -44,7 +63,7 @@ app.delete("/projects/:id", (req, res) => {
   res.json(projects);
 });
 
-app.post("/projects/:id/tasks", (req, res) => {
+app.post("/projects/:id/tasks", checkProjectExist, (req, res) => {
   const { id } = req.params;
   const { title } = req.body;
 
